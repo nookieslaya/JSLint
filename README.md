@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+# JSLint Studio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A lightweight JavaScript lint playground built with React, Vite, and Monaco Editor. It focuses on fast feedback, a dark IDE-style UI, and a small set of custom lint rules.
 
-Currently, two official plugins are available:
+## Features
+- Monaco editor with custom dark theme, squiggles, and line highlights.
+- Custom lint rules: undefined identifiers, TDZ (use before declaration), and unused declarations.
+- Debounced linting + manual "Lint" action.
+- Issues panel with filters and search.
+- Copy/Clear controls and autosave via localStorage.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting started
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open the printed Vite URL (usually `http://localhost:5173`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
+- `npm run dev` - start dev server
+- `npm run build` - typecheck + production build
+- `npm run preview` - preview production build
+- `npm run lint` - run ESLint
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## How the linter works
+The linter uses Babel to build an AST and then checks:
+- **Undefined identifiers** (not declared in scope and not in the browser globals list)
+- **TDZ** for `let`, `const`, and parameters (use before declaration)
+- **Unused declarations** (with fix metadata)
+
+Parser errors are reported as a single error entry.
+
+## Project structure
+- `src/app/App.tsx` - application shell, toolbar, and lint orchestration
+- `src/components/editor/Editor.tsx` - Monaco editor setup and theming
+- `src/components/errorslist/EditorList.tsx` - issues panel UI, filters, and search
+- `src/services/lintService.ts` - lint engine and rules
+- `src/types/lint.ts` - lint data types
+- `src/index.css` - global theme and UI styling
+
+## Notes
+- This is not a full ESLint replacement; the rules are intentionally minimal.
+- LocalStorage key: `jslint:code`.
+
+## License
+MIT

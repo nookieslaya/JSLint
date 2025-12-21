@@ -1,13 +1,12 @@
+import { useMemo, useState } from "react";
 import type { ErrorsListProps } from "./EditorList.types";
-function severityBadge(severity: "error" | "warning") {
-  const base =
-    "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border";
 
+function severityBadge(severity: "error" | "warning") {
   if (severity === "error") {
-    return `${base} bg-red-50 text-red-700 border-red-200`;
+    return "issue-badge issue-badge--error";
   }
 
-  return `${base} bg-yellow-50 text-yellow-800 border-yellow-200`;
+  return "issue-badge issue-badge--warning";
 }
 
 const ErrorsList = ({
@@ -15,43 +14,109 @@ const ErrorsList = ({
   onSelect,
   title = "Issues",
 }: ErrorsListProps) => {
+  const [severityFilter, setSeverityFilter] = useState<
+    "all" | "error" | "warning"
+  >("all");
+  const [query, setQuery] = useState("");
+
+  const errorCount = useMemo(
+    () => errors.filter((err) => err.severity === "error").length,
+    [errors]
+  );
+  const warningCount = errors.length - errorCount;
+  const queryValue = query.trim().toLowerCase();
+
+  const filteredErrors = useMemo(() => {
+    return errors.filter((err) => {
+      if (severityFilter !== "all" && err.severity !== severityFilter) {
+        return false;
+      }
+
+      if (!queryValue) return true;
+
+      const haystack =
+        `${err.message} ${err.ruleId ?? ""} ${err.line}:${err.column}`.toLowerCase();
+      return haystack.includes(queryValue);
+    });
+  }, [errors, severityFilter, queryValue]);
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="mb-2 flex items-center justify-between">
-        <div className="text-sm font-medium text-gray-700">{title}</div>
-        <div className="text-xs text-gray-500">{errors.length} items</div>
+    <div className="panel panel-pop panel-pop--delay">
+      <div className="panel-header">
+        <div>
+          <div className="panel-title">{title}</div>
+          <div className="panel-subtitle">
+            {errorCount} errors, {warningCount} warnings
+          </div>
+        </div>
+        <div className="panel-meta">
+          {filteredErrors.length} of {errors.length} items
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto rounded-md border border-gray-200 bg-white">
+      <div className="panel-toolbar">
+        <div className="filter-group">
+          <button
+            type="button"
+            className={`filter-button ${
+              severityFilter === "all" ? "is-active" : ""
+            }`}
+            onClick={() => setSeverityFilter("all")}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            className={`filter-button ${
+              severityFilter === "error" ? "is-active" : ""
+            }`}
+            onClick={() => setSeverityFilter("error")}
+          >
+            Errors
+          </button>
+          <button
+            type="button"
+            className={`filter-button ${
+              severityFilter === "warning" ? "is-active" : ""
+            }`}
+            onClick={() => setSeverityFilter("warning")}
+          >
+            Warnings
+          </button>
+        </div>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          className="search-input"
+          placeholder="Search issues..."
+        />
+      </div>
+
+      <div className="panel-body">
         {errors.length === 0 ? (
-          <div className="p-4 text-sm text-gray-500">Brak błędów 🎉</div>
+          <div className="empty-state">No issues</div>
+        ) : filteredErrors.length === 0 ? (
+          <div className="empty-state">No results</div>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {errors.map((err, idx) => (
+          <ul className="issue-list">
+            {filteredErrors.map((err, idx) => (
               <li
                 key={`${err.line}:${err.column}:${idx}`}
-                className="cursor-pointer p-3 hover:bg-gray-50"
+                className="issue-item"
                 onClick={() => onSelect?.(err)}
               >
-                <div className="flex items-start gap-3">
-                  <span className={severityBadge(err.severity)}>
-                    {err.severity === "error" ? "Error" : "Warning"}
-                  </span>
+                <span className={severityBadge(err.severity)}>
+                  {err.severity === "error" ? "Error" : "Warning"}
+                </span>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm text-gray-900 break-words">
-                      {err.message}
-                    </div>
-
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                      <span>
-                        Ln {err.line}, Col {err.column}
-                      </span>
-
-                      {err.ruleId ? <span>Rule: {err.ruleId}</span> : null}
-                    </div>
+                <div>
+                  <div className="issue-message">{err.message}</div>
+                  <div className="issue-meta">
+                    <span>
+                      Ln {err.line}, Col {err.column}
+                    </span>
+                    {err.ruleId ? <span>Rule: {err.ruleId}</span> : null}
                   </div>
                 </div>
               </li>

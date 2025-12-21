@@ -14,5 +14,5 @@ export type LintError = {
   endLine?: number;
   endColumn?: number;
   severity: LintSeverity;
-  fix?: Fix; // 👈 NOWE, opcjonalne
+  fix?: Fix; // optional
 };

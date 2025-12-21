@@ -47,7 +47,7 @@ export function lintCode(code: string): LintError[] {
   const errors: LintError[] = [];
   const scopeStack: Scope[] = [];
 
-  // 🔁 deduplikacja unused warnings
+  // deduplicate unused warnings
   const reportedUnused = new Set<number>();
 
   /* ---------- scope helpers ---------- */
@@ -66,7 +66,7 @@ export function lintCode(code: string): LintError[] {
     scope.declared.forEach((decl, name) => {
       if (scope.used.has(name)) return;
 
-      // ⛔ nie zgłaszamy tej samej deklaracji 2×
+      // do not report the same declaration twice
       if (reportedUnused.has(decl.startIndex)) return;
 
       reportedUnused.add(decl.startIndex);
@@ -96,7 +96,7 @@ export function lintCode(code: string): LintError[] {
   ) => {
     const scope = scopeStack[scopeStack.length - 1];
 
-    // nie nadpisujemy (hoisting + TDZ)
+    // do not overwrite (hoisting + TDZ)
     if (!scope.declared.has(name)) {
       scope.declared.set(name, {
         kind,
@@ -113,7 +113,7 @@ export function lintCode(code: string): LintError[] {
       if (decl) {
         scopeStack[i].used.add(name);
 
-        // 🔥 TDZ
+        // TDZ check
         if (
           (decl.kind === "let" ||
             decl.kind === "const" ||

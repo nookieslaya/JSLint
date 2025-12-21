@@ -392,6 +392,33 @@ body {
   animation-delay: 0.12s;
 }
 
+.app-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 6px 4px 2px;
+}
+
+.footer-link {
+  color: var(--accent-strong);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--accent);
+  border-color: rgba(63, 166, 255, 0.6);
+}
+
+.footer-link:focus-visible {
+  outline: 2px solid rgba(63, 166, 255, 0.45);
+  outline-offset: 2px;
+}
+
 @media (max-width: 1100px) {
   .app-grid {
     grid-template-columns: 1fr;

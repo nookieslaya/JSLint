@@ -173,6 +173,17 @@ const App = () => {
           }}
         />
       </div>
+      <footer className="app-footer">
+        <span className="footer-label">Built by</span>
+        <a
+          className="footer-link"
+          href="https://github.com/nookieslaya/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          github.com/nookieslaya
+        </a>
+      </footer>
     </div>
   );
 };

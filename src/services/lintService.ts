@@ -87,6 +87,45 @@ export function lintCode(code: string): LintError[] {
 
   /* ---------- declare / use ---------- */
 
+  const getSuggestion = (name: string) => {
+    const candidates = new Set<string>();
+
+    for (let i = scopeStack.length - 1; i >= 0; i--) {
+      scopeStack[i].declared.forEach((_decl, key) => {
+        candidates.add(key);
+      });
+    }
+
+    GLOBALS.forEach((globalName) => candidates.add(globalName));
+
+    const lowerName = name.toLowerCase();
+    for (const candidate of candidates) {
+      if (candidate.toLowerCase() === lowerName && candidate !== name) {
+        return candidate;
+      }
+    }
+
+    const maxDistance =
+      name.length <= 3 ? 1 : name.length <= 6 ? 2 : 3;
+
+    let best: { name: string; distance: number } | null = null;
+
+    for (const candidate of candidates) {
+      if (Math.abs(candidate.length - name.length) > maxDistance) {
+        continue;
+      }
+
+      const distance = levenshtein(name, candidate);
+      if (distance <= maxDistance) {
+        if (!best || distance < best.distance) {
+          best = { name: candidate, distance };
+        }
+      }
+    }
+
+    return best?.name ?? null;
+  };
+
   const declare = (
     name: string,
     kind: Decl["kind"],
@@ -134,12 +173,50 @@ export function lintCode(code: string): LintError[] {
 
     if (GLOBALS.has(name)) return;
 
+    const suggestion = getSuggestion(name);
+    const message = suggestion
+      ? `'${name}' is not defined. Did you mean '${suggestion}'?`
+      : `'${name}' is not defined`;
+
     errors.push({
-      message: `'${name}' is not defined`,
+      message,
       line: loc.line,
       column: loc.column,
       severity: "error",
     });
+  };
+
+  const levenshtein = (a: string, b: string) => {
+    if (a === b) return 0;
+
+    const aLen = a.length;
+    const bLen = b.length;
+
+    if (aLen === 0) return bLen;
+    if (bLen === 0) return aLen;
+
+    const row = new Array<number>(bLen + 1);
+    for (let j = 0; j <= bLen; j++) {
+      row[j] = j;
+    }
+
+    for (let i = 1; i <= aLen; i++) {
+      let prevDiagonal = row[0];
+      row[0] = i;
+
+      for (let j = 1; j <= bLen; j++) {
+        const temp = row[j];
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        row[j] = Math.min(
+          row[j] + 1,
+          row[j - 1] + 1,
+          prevDiagonal + cost
+        );
+        prevDiagonal = temp;
+      }
+    }
+
+    return row[bLen];
   };
 
   /* ---------- HOIST DECLARATIONS ---------- */
@@ -303,9 +380,10 @@ export function lintCode(code: string): LintError[] {
   } catch (err: any) {
     errors.push({
       message: err.message,
-      line: err.loc?.line ?? 0,
-      column: err.loc?.column ?? 0,
+      line: err.loc?.line ?? 1,
+      column: err.loc?.column ?? 1,
       severity: "error",
+      ruleId: "syntax",
     });
   }
 
